@@ -1,6 +1,9 @@
 #include "Shell.hpp"
 
 #include <boost/tokenizer.hpp>
+#include <boost/filesystem/operations.hpp>
+
+namespace fs = boost::filesystem;
 
 const std::string PROMPT_MSG = "tsh> ";
 
@@ -39,7 +42,8 @@ int Shell::tokenizeInput(std::vector<std::string> &tokens) {
 
     if(std::getline(*this->in, line)) {
         // TODO: Implement better tokenizer function.
-        boost::tokenizer<> tok(line);
+        const boost::char_separator<char> sep(" ");
+        boost::tokenizer<boost::char_separator<char>> tok(line, sep);
 
         for(auto it = tok.begin(); it != tok.end(); it++) {
             tokens.push_back(*it);
@@ -62,18 +66,35 @@ int Shell::processInput(std::vector<std::string> &tokens) {
     else if ("cdir" == tokens.front()) {
         *this->out << this->cwd.string();
     }
-    else if ("cd") {
-        // Todo: Throw exception if token[1] inexistant aka invalid commmand.
+    else if ("cd" == tokens.front()) {
+        // Todo: Throw exception if tokens[1] inexistant aka invalid commmand.
+
         boost::filesystem::path p(tokens[1]);
-        if(p.is_absolute()) {
-            this->cwd = p;
-        }
-        else {
-            this->cwd += p;
-        }
-        this->cwd.normalize();
+
+        this->changeWorkingDirectory(p);
     }
 
     return 0;
+}
+
+void Shell::changeWorkingDirectory(boost::filesystem::path dest) {
+
+    auto nextPlausiblePath = this->cwd;
+
+    if (dest.is_absolute()) {
+        nextPlausiblePath = dest;
+    }
+    else {
+        nextPlausiblePath += boost::filesystem::path::preferred_separator;
+        nextPlausiblePath += dest;
+    }
+    nextPlausiblePath.normalize();
+
+    if (fs::is_directory(nextPlausiblePath)) {
+        this->cwd = nextPlausiblePath;
+    }
+    else {
+        // Todo: Throw an exception to show that the desired path is not valid... Or maybe do something better like telling if it's a file or if it's just not existing.
+    }
 }
 

@@ -29,6 +29,8 @@ private:
     int tokenizeInput(std::vector<std::string> &tokens);
     int processInput(std::vector<std::string> &tokens);
     int processBuiltin(std::vector<std::string> &tokens);
+
+    void changeWorkingDirectory(boost::filesystem::path dest);
 };
 
 #endif
