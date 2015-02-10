@@ -4,11 +4,10 @@
 
 const std::string PROMPT_MSG = "TSH> ";
 
-Shell::Shell(std::istream *in, FILE *out, FILE *err) {
+Shell::Shell(std::istream *in, std::ostream *out, FILE *err) {
     this->in = in;
     this->out = out;
     this->err = err;
-
     this->cwd = boost::filesystem::current_path();
 }
 
@@ -17,13 +16,10 @@ int Shell::run() {
     int lastStatus = 0;
 
     do {
-        auto linetokens = std::list<std::string>();
-
+        auto linetokens = std::vector<std::string>();
         this->displayPrompt();
         lastStatus &= this->tokenizeInput(linetokens);
         lastStatus &= this->processInput(linetokens);
-
-
     }
     while(!lastStatus);
 
@@ -31,10 +27,10 @@ int Shell::run() {
 }
 
 void Shell::displayPrompt() {
-    std::cout << "\n" << " " << PROMPT_MSG;
+    std::cout << "\n" << PROMPT_MSG;
 }
 
-int Shell::tokenizeInput(std::list<std::string> &tokens) {
+int Shell::tokenizeInput(std::vector<std::string> &tokens) {
     /*
     Takes the input and puts it's token in the provided list.
      */
@@ -54,13 +50,17 @@ int Shell::tokenizeInput(std::list<std::string> &tokens) {
     }
 }
 
-int Shell::processBuiltin(std::list<std::string> &tokens) {
-    // TODO: Process builtins.
-}
 
-int Shell::processInput(std::list<std::string> &tokens) {
+int Shell::processInput(std::vector<std::string> &tokens) {
 
+    if (tokens.empty()) {
+        return 0;
+    }
+    else if ("cdir" == tokens.front()) {
+        *this->out << this->cwd.string();
+    }
+    
 
     return 0;
-
 }
+
