@@ -2,7 +2,7 @@
 
 #include <boost/tokenizer.hpp>
 
-const std::string PROMPT_MSG = "TSH> ";
+const std::string PROMPT_MSG = "tsh> ";
 
 Shell::Shell(std::istream *in, std::ostream *out, FILE *err) {
     this->in = in;
@@ -20,6 +20,7 @@ int Shell::run() {
         this->displayPrompt();
         lastStatus &= this->tokenizeInput(linetokens);
         lastStatus &= this->processInput(linetokens);
+
     }
     while(!lastStatus);
 
@@ -37,10 +38,12 @@ int Shell::tokenizeInput(std::vector<std::string> &tokens) {
     std::string line;
 
     if(std::getline(*this->in, line)) {
-        boost::tokenizer<boost::char_separator<char>> tok(line);
+        // TODO: Implement better tokenizer function.
+        boost::tokenizer<> tok(line);
 
         for(auto it = tok.begin(); it != tok.end(); it++) {
             tokens.push_back(*it);
+            *this->out << *it << std::endl;
         }
         return 0;
     }
@@ -59,7 +62,16 @@ int Shell::processInput(std::vector<std::string> &tokens) {
     else if ("cdir" == tokens.front()) {
         *this->out << this->cwd.string();
     }
-    
+    else if ("cd") {
+        // Todo: Throw exception if token[1] inexistant aka invalid commmand.
+        boost::filesystem::path p(tokens[1]);
+        if(p.is_absolute()) {
+            this->cwd = p;
+        }
+        else {
+            (this->cwd += p).normalize();
+        }
+    }
 
     return 0;
 }
