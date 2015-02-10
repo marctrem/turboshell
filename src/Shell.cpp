@@ -69,8 +69,9 @@ int Shell::processInput(std::vector<std::string> &tokens) {
             this->cwd = p;
         }
         else {
-            (this->cwd += p).normalize();
+            this->cwd += p;
         }
+        this->cwd.normalize();
     }
 
     return 0;
