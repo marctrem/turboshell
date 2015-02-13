@@ -38,6 +38,7 @@ int main(int argc, char *argv[]) {
         if(!errno) {
             // Success
             fclose(new_file);
+            std::cout << "Fichier créé" << std::endl;
         }
         else {
             // Problem
