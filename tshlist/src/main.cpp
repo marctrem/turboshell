@@ -30,8 +30,14 @@ int main(int argc, char *argv[]) {
         auto full_path = cwd;
         full_path.append(entry.d_name);
 
-        if (showDirectories and full_path.is_a(S_IFDIR)
-                or !showDirectories and full_path.is_a(S_IFREG)) {
+        if (showDirectories
+                and full_path.is_a(S_IFDIR)
+                and strcmp(entry.d_name, ".")
+                and strcmp(entry.d_name, "..")
+
+                or
+                !showDirectories and full_path.is_a(S_IFREG)) {
+
             std::cout << entry.d_name << std::endl;
         }
     }
