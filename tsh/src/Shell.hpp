@@ -1,13 +1,13 @@
 
 
-#ifndef SHELL_H_
-#define SHELL_H_
+#pragma once
 
 #include <iostream>
 #include <list>
 #include <vector>
-#include <boost/filesystem.hpp>
+#include <string>
 #include <map>
+#include "../../libpathm/include/path.hpp"
 
 
 class Shell {
@@ -23,14 +23,14 @@ private:
     std::ostream *out;
     FILE* err;
 
-    boost::filesystem::path cwd;
+    std::map<std::string, pathm::path> executablesInPath;
+
+    pathm::path cwd;
 
     void displayPrompt();
     int tokenizeInput(std::vector<std::string> &tokens);
     int processInput(std::vector<std::string> &tokens);
-    int processBuiltin(std::vector<std::string> &tokens);
+    void findExecutablesInPath();
 
-    void changeWorkingDirectory(boost::filesystem::path dest);
+    void changeWorkingDirectory(pathm::path &dest);
 };
-
-#endif

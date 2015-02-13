@@ -9,8 +9,8 @@ using namespace std;
 int main() {
     cout << "TSH v" << VERSION << endl;
 
-    Shell *tsh = new Shell();
-    tsh->run();
+    Shell tsh;
+    tsh.run();
 
     return 0;
 }
