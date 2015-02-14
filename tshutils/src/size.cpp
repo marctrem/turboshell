@@ -43,12 +43,13 @@ get_directory_size(const path &p) {
 
             errno = 0;
             stat(full_path.c_str(), &filestat);
-            if (errno == 0) {
+            int errval = errno;
+            if (!errval) {
                 file_count++;
                 size += filestat.st_size;
             }
             else {
-                std::cout << "Cannot stat: " << full_path << std::endl;
+                std::cerr << strerror(errval) << ": "<< full_path << std::endl;
                 //throw 30;
             }
         }
