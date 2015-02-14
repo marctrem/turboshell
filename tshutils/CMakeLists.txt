@@ -17,3 +17,7 @@ set(SOURCE_FILES_newdir src/newdir.cpp ../libpathm/src/path.cpp)
 add_executable(newdir ${SOURCE_FILES_newdir})
 target_link_libraries(newdir ${Boost_LIBRARIES})
 
+set(SOURCE_FILES_size src/size.cpp ../libpathm/src/path.cpp)
+add_executable(size ${SOURCE_FILES_size})
+target_link_libraries(size ${Boost_LIBRARIES})
+
