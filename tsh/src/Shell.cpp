@@ -15,10 +15,7 @@ Shell::Shell(std::istream *in, std::ostream *out, FILE *err) {
     this->out = out;
     this->err = err;
 
-    long size = pathconf(".", _PC_PATH_MAX);
-    char *path_buf = (char *) malloc((size_t) size);
-
-    this->cwd = path(getcwd(path_buf, (size_t) size));
+    this->cwd = path::get_current_path();
 
     this->findExecutablesInPath();
 
@@ -105,24 +102,19 @@ int Shell::processInput(std::vector<std::string> &tokens) {
             }
             cmd[i] = NULL;
 
-            std::string env_pwd = "PWD=";
-            env_pwd.append(this->cwd);
-
-            char *env[] = { (char *) env_pwd.c_str(), (char *) 0};
-
-            std::cout << "Spawning in: " << env_pwd << std::endl;
-
             pid_t pid;
             pid = fork();
 
             if (pid == 0) {
                 // Child
-                execve(exec_path.c_str(), cmd, env);
-
+                chdir(this->cwd.c_str());
+                execv(exec_path.c_str(), cmd);
             }
             else {
+                // Parent
                 int result = 0;
                 wait(&result);
+                // Todo: Do something on weird return... maybe say that command failed?
             }
 
             return 0;
@@ -170,7 +162,6 @@ void Shell::findExecutablesInPath() {
             executablesInPath.insert(std::pair<std::string, path>(entry.d_name, full_path));
         }
     }
-
     std::cout << "Found " << executablesInPath.size() << " executables." << std::endl;
 }
 
