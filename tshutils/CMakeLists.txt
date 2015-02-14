@@ -21,3 +21,7 @@ set(SOURCE_FILES_size src/size.cpp ../libpathm/src/path.cpp)
 add_executable(size ${SOURCE_FILES_size})
 target_link_libraries(size ${Boost_LIBRARIES})
 
+set(SOURCE_FILES_rmall src/rmall.cpp ../libpathm/src/path.cpp)
+add_executable(rmall ${SOURCE_FILES_rmall})
+target_link_libraries(rmall ${Boost_LIBRARIES})
+
