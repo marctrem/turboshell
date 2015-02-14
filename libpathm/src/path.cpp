@@ -51,6 +51,9 @@ path &path::normalize() {
         if (it == ".." and this->size() != 0) {
             path_stack.pop_back();
         }
+        else if (it == ".") {
+            continue;
+        }
         else {
             path_stack.push_back(it);
         }
@@ -71,23 +74,23 @@ path &path::normalize() {
     return *this;
 }
 
-bool path::is_a(unsigned int types) {
+bool path::is_a(unsigned int types) const {
     struct stat path_stat;
+
+    errno = 0;
     if (!stat(this->c_str(), &path_stat)) {
         // Success
         return (path_stat.st_mode & types) != 0;
     }
     else {
         // Failure
-        std::cout << "ERRNO: " << errno << " : " << *this << std::endl;
+        //std::cout << "ERRNO: " << errno << " : " << *this << std::endl;
         return false;
     }
 
 }
 
-std::list<struct dirent> path::list_directory() {
-
-    std::cout << "Listing '" << *this << "'" << std::endl;
+std::list<struct dirent> path::list_directory() const {
 
     if (this->is_a(S_IFDIR)) {
         std::list<struct dirent> content;
@@ -102,10 +105,16 @@ std::list<struct dirent> path::list_directory() {
         closedir(dirp);
         return content;
 
-
     }
     else {
         std::cout << "Cannot list directory" << std::endl;
         throw 20;
     }
+}
+
+path path::get_current_path() {
+    long size = pathconf(".", _PC_PATH_MAX);
+    char *path_buf = (char *) malloc((size_t) size);
+
+    return path(getcwd(path_buf, (size_t) size)).normalize();
 }
