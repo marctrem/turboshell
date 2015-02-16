@@ -3,7 +3,11 @@
 .PHONY: libpathm
 .PHONY: tsh
 .PHONY: install
-all: | libpathm tsh
+.PHONY: build
+
+all: | build install
+
+build: | libpathm tsh
 
 libpathm:
 	$(MAKE) -C ./libpathm
