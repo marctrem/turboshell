@@ -15,13 +15,17 @@ int main(int argc, char *argv[]) {
     bool showDirectories;
 
     // Todo: Make it tougher.
-    if (argc > 1 && !strncmp(argv[1], "-d", 2)) {
+    if (argc == 2 && !strncmp(argv[1], "-d", 2)) {
         cout << "Sous-répertoires de " << cwd << endl;
         showDirectories = true;
     }
-    else {
+    else if (argc == 1) {
         cout << "Fichiers de " << cwd << endl;
         showDirectories = false;
+    }
+    else {
+        cout << "Arguments invalides." << endl;
+        return 0;
     }
 
     auto dir_listing = cwd.list_directory();

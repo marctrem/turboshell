@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     path cwd = path::get_current_path();
 
     if (argc == 1) {
-        // Todo: Display usage
+        std::cout << "Arguments invalides" << endl;
         return 0;
     }
 

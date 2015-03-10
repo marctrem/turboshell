@@ -106,7 +106,6 @@ int main(int argc, char *argv[]) {
     for (path path : paths) {
         if (!is_folder_deletable(path)) {
             deletable = false;
-            std::cout << "Non suprimable: " << path << std::endl;
             break;
         }
     }

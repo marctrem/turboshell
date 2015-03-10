@@ -55,7 +55,6 @@ int Shell::tokenizeInput(std::vector<std::string> &tokens) {
 
         for(auto it = tok.begin(); it != tok.end(); it++) {
             tokens.push_back(*it);
-            *this->out << *it << std::endl;
         }
         return 0;
     }
@@ -94,8 +93,6 @@ int Shell::processInput(std::vector<std::string> &tokens) {
         // Try to find command
         try {
             path &exec_path = executablesInPath.at(tokens[0]);
-
-            std::cout << exec_path << std::endl;
 
             char *cmd[tokens.size() + 1];
 
