@@ -48,8 +48,9 @@ path &path::normalize() {
 
     // Put the path in a stack
     for(auto& it : tokenizer) {
-        if (it == ".." and this->size() != 0) {
-            path_stack.pop_back();
+        if (it == "..") {
+            if (!path_stack.empty())
+                path_stack.pop_back();
         }
         else if (it == ".") {
             continue;
@@ -68,7 +69,9 @@ path &path::normalize() {
         path_stack.pop_front();
     }
 
-    if (this->is_a(S_IFDIR)) {
+    if (*this == "") { this->push_back('/'); };
+
+    if (this->is_a(S_IFDIR) && this->back() != '/') {
         this->push_back('/');
     }
     return *this;

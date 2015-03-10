@@ -72,19 +72,23 @@ int Shell::processInput(std::vector<std::string> &tokens) {
         return 0;
     }
     else if ("cdir" == tokens.front()) {
+
+        if (tokens.size() != 1) {
+            *this->out << ARGUMENT_ERROR << std::endl;
+            return 0;
+        }
         *this->out << "Répertoire courrant : " << this->cwd;
     }
     else if ("cd" == tokens.front()) {
-        // Todo: Throw exception if tokens[1] inexistant aka invalid commmand.
+        
+        if (tokens.size() != 2) {
+            *this->out << ARGUMENT_ERROR << std::endl;
+            return 0;
+        }
 
         path p(tokens[1]);
 
         this->changeWorkingDirectory(p);
-    }
-    else if ("./" == tokens.front()) {
-
-
-
     }
     else {
         // Try to find command
@@ -149,20 +153,15 @@ void Shell::changeWorkingDirectory(pathm::path &dest) {
 void Shell::findExecutablesInPath() {
 
     // Todo: Extract path
-    auto bin_path = path("~/inf3172").make_absolute(this->cwd);
-    std::cout << bin_path << std::endl;
+    auto bin_path = path(REL_BIN_PATH).make_absolute(this->cwd);
 
     for(auto entry : bin_path.list_directory()) {
         path full_path = path(entry.d_name).make_absolute(bin_path);
 
         if (full_path.is_a(S_IEXEC) && !full_path.is_a(S_IFDIR)) { // Cache the struct stat.
-            std::cout << full_path << std::endl;
-
-            *this->out << "Binary found: '" << entry.d_name << "'" << std::endl;
             executablesInPath.insert(std::pair<std::string, path>(entry.d_name, full_path));
         }
     }
-    std::cout << "Found " << executablesInPath.size() << " executables." << std::endl;
 }
 
 

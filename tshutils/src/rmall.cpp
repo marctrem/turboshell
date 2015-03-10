@@ -6,6 +6,7 @@
 #include <utility>
 #include <unistd.h>
 #include <ftw.h>
+#include <vector>
 
 #include "../../libpathm/include/path.hpp"
 
@@ -89,17 +90,34 @@ int main(int argc, char *argv[]) {
     path cwd = path::get_current_path();
 
     if (argc == 1) {
-        // Todo: Display usage
-        std::cout << "Usage: ." << std::endl;
+        std::cout << "Arguments invalides." << std::endl;
         return 0;
     }
 
-    path full_path = path(argv[1]).make_absolute(cwd);
+    std::vector<path> paths;
 
-    if(is_folder_deletable(full_path)) {
-        unlink_folder(full_path);
+    for (int i = 1; i < argc; i++) {
+        paths.push_back(path(argv[i]).make_absolute(cwd));
+    }
+
+    // Make sure they are all deletable
+    bool deletable = true;
+
+    for (path path : paths) {
+        if (!is_folder_deletable(path)) {
+            deletable = false;
+            std::cout << "Non suprimable: " << path << std::endl;
+            break;
+        }
+    }
+
+    if (deletable) {
+        for (path path : paths) {
+            unlink_folder(path);
+        }
         std::cout << "Répertoire supprimé" << std::endl;
     }
+
 
     return 0;
 }

@@ -34,3 +34,6 @@ private:
 
     void changeWorkingDirectory(pathm::path &dest);
 };
+
+static char const *const REL_BIN_PATH = "~/inf3172/bin";
+static char const *const ARGUMENT_ERROR = "Arguments invalide.";

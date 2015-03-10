@@ -1,4 +1,4 @@
-
+INSTALL_DIR=~/inf3172/bin/
 
 .PHONY: libpathm
 .PHONY: tsh
@@ -21,17 +21,9 @@ utils:
 
 install:
 	install -m 0755 tsh/out/tsh turboshell
-	-mkdir ~/inf3172
-	install -m 0755 tshutils/out/list ~/inf3172/
-	install -m 0755 tshutils/out/new ~/inf3172/
-	install -m 0755 tshutils/out/newdir ~/inf3172/
-	install -m 0755 tshutils/out/rmall ~/inf3172/
-	install -m 0755 tshutils/out/size ~/inf3172/
-install:
-	install -m 0755 tsh/out/tsh turboshell
-	-mkdir ~/inf3172
-	install -m 0755 tshutils/out/list ~/inf3172/
-	install -m 0755 tshutils/out/new ~/inf3172/
-	install -m 0755 tshutils/out/newdir ~/inf3172/
-	install -m 0755 tshutils/out/rmall ~/inf3172/
-	install -m 0755 tshutils/out/size ~/inf3172/
+	-mkdir -p $(INSTALL_DIR)
+	install -m 0755 tshutils/out/list $(INSTALL_DIR)
+	install -m 0755 tshutils/out/new $(INSTALL_DIR)
+	install -m 0755 tshutils/out/newdir $(INSTALL_DIR)
+	install -m 0755 tshutils/out/rmall $(INSTALL_DIR)
+	install -m 0755 tshutils/out/size $(INSTALL_DIR)
