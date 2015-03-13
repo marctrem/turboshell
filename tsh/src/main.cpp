@@ -2,7 +2,7 @@
 #include <string>
 #include "Shell.hpp"
 
-const std::string VERSION = "0.0.1";
+const std::string VERSION = "1.0.0";
 
 using namespace std;
 

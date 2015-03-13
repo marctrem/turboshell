@@ -61,13 +61,19 @@ int main(int argc, char *argv[]) {
 
     path cwd = path::get_current_path();
 
-    if (argc == 1) {
-        // Todo: Display usage
-        std::cout << "Usage: ." << std::endl;
+    if (argc != 2) {
+        cout << "Arguments invalides." << endl;
         return 0;
     }
 
     path full_path = path(argv[1]).make_absolute(cwd);
+
+
+    if (!(full_path.is_a(S_IFDIR))) {
+        std::cout << "Répertoire introuvable" << std::endl;
+        return 0;
+    }
+
     auto res = get_directory_size(full_path);
 
     std::cout << "Le répertoire "
