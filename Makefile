@@ -20,8 +20,8 @@ utils:
 	$(MAKE) -C ./tshutils
 
 install:
-	install -m 0755 tsh/out/tsh turboshell
 	-mkdir -p $(INSTALL_DIR)
+	install -m 0755 tsh/out/tsh $(INSTALL_DIR)
 	install -m 0755 tshutils/out/list $(INSTALL_DIR)
 	install -m 0755 tshutils/out/new $(INSTALL_DIR)
 	install -m 0755 tshutils/out/newdir $(INSTALL_DIR)
