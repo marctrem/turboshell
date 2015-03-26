@@ -29,8 +29,8 @@ int Shell::run() {
     do {
         auto linetokens = std::vector<std::string>();
         this->displayPrompt();
-        lastStatus &= this->tokenizeInput(linetokens);
-        lastStatus &= this->processInput(linetokens);
+        lastStatus |= this->tokenizeInput(linetokens);
+        lastStatus |= this->processInput(linetokens);
 
     }
     while(!lastStatus);
@@ -88,6 +88,9 @@ int Shell::processInput(std::vector<std::string> &tokens) {
         path p(tokens[1]);
 
         this->changeWorkingDirectory(p);
+    }
+    else if ("exit" == tokens.front()) {
+        return -1;
     }
     else {
         // Try to find command
