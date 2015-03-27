@@ -28,8 +28,10 @@ int Shell::run() {
 
     do {
         auto linetokens = std::vector<std::string>();
+        std::string input;
+        std::string output;
         this->displayPrompt();
-        lastStatus |= this->tokenizeInput(linetokens);
+        lastStatus |= this->tokenizeInput(linetokens, input, output);
         lastStatus |= this->processInput(linetokens);
 
     }
@@ -42,7 +44,7 @@ void Shell::displayPrompt() {
     std::cout << "\n" << PROMPT_MSG;
 }
 
-int Shell::tokenizeInput(std::vector<std::string> &tokens) {
+int Shell::tokenizeInput(std::vector<std::string> &tokens, std::string &input, std::string &output) {
     /*
     Takes the input and puts it's token in the provided list.
      */
@@ -51,11 +53,31 @@ int Shell::tokenizeInput(std::vector<std::string> &tokens) {
     if(std::getline(*this->in, line)) {
         // TODO: Implement better tokenizer function.
         const boost::char_separator<char> sep(" ");
-        boost::tokenizer<boost::char_separator<char>> tok(line, sep);
+        const boost::char_separator<char> sep_in("<");
+        const boost::char_separator<char> sep_out(">");
 
-        for(auto it = tok.begin(); it != tok.end(); it++) {
-            tokens.push_back(*it);
+        // Get the output
+        boost::tokenizer<boost::char_separator<char>> tok_out(line, sep_out);
+        std::vector<std::string> vec_out(tok_out.begin(), tok_out.end());
+        if (vec_out.size() > 2) {
+            std::cerr << "error while redirecting output" << std::endl;
+            return 0;
         }
+        else if (vec_out.size() == 2) {
+            output = vec_out.back();
+        }
+
+
+        // Get the input
+        boost::tokenizer<boost::char_separator<char>> tok_in(vec_out.at(0), sep_in);
+        std::vector<std::string> vec_in(tok_in.begin(), tok_in.end());
+        if (vec_in.size() > 2) {std::cerr << "error while redirecting input" << std::endl; }
+
+        // Get the command
+        boost::tokenizer<boost::char_separator<char>> tok(vec_in.at(0), sep);
+
+        tokens.assign(tok.begin(), tok.end());
+
         return 0;
     }
     else {

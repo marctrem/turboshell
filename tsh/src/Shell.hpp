@@ -28,7 +28,7 @@ private:
     pathm::path cwd;
 
     void displayPrompt();
-    int tokenizeInput(std::vector<std::string> &tokens);
+    int tokenizeInput(std::vector<std::string> &tokens, std::string&, std::string&);
     int processInput(std::vector<std::string> &tokens);
     void findExecutablesInPath();
 
