@@ -29,7 +29,7 @@ private:
 
     void displayPrompt();
     int tokenizeInput(std::vector<std::string> &tokens, std::string&, std::string&);
-    int processInput(std::vector<std::string> &tokens);
+    int processInput(std::vector<std::string> &tokens, FILE*, FILE*);
     void findExecutablesInPath();
 
     void changeWorkingDirectory(pathm::path &dest);

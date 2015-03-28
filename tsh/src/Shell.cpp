@@ -2,9 +2,12 @@
 
 #include <unistd.h>
 #include <boost/tokenizer.hpp>
+#include <boost/algorithm/string.hpp>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <exception>
+
+#include <typeinfo>
 
 using namespace pathm;
 
@@ -27,12 +30,57 @@ int Shell::run() {
     int lastStatus = 0;
 
     do {
+
+        int savedErrno;
+
         auto linetokens = std::vector<std::string>();
         std::string input;
         std::string output;
+
+        auto inputFD = stdin;
+        auto outputFD = stdout;
+
         this->displayPrompt();
         lastStatus |= this->tokenizeInput(linetokens, input, output);
-        lastStatus |= this->processInput(linetokens);
+        std::cout << "Input: " << input << std::endl;
+        std::cout << "Output " << output << std::endl;
+
+        // Prepare files
+
+        try {
+
+            if (!input.empty()) {
+                inputFD = fopen(input.c_str(), "r");
+                savedErrno = errno;
+
+                if (savedErrno) {
+                    std::cout << "Input redirection: " << std::strerror(savedErrno) << std::endl;
+                    throw std::exception();
+                }
+            }
+
+            if (!output.empty()) {
+                outputFD = fopen(output.c_str(), "w");
+                savedErrno = errno;
+
+                if (savedErrno) {
+                    std::cout << "Output redirection " << std::strerror(savedErrno) << std::endl;
+                    throw std::exception();
+                }
+            }
+
+            lastStatus |= this->processInput(linetokens, inputFD, outputFD);
+
+        } catch (std::exception e) {}
+
+        // cleanup
+        if (inputFD != stdin) {
+            fclose(inputFD);
+        }
+
+        if (outputFD != stdout) {
+            fclose(outputFD);
+        }
 
     }
     while(!lastStatus);
@@ -65,13 +113,21 @@ int Shell::tokenizeInput(std::vector<std::string> &tokens, std::string &input, s
         }
         else if (vec_out.size() == 2) {
             output = vec_out.back();
+            boost::algorithm::trim(output);
         }
 
 
         // Get the input
         boost::tokenizer<boost::char_separator<char>> tok_in(vec_out.at(0), sep_in);
         std::vector<std::string> vec_in(tok_in.begin(), tok_in.end());
-        if (vec_in.size() > 2) {std::cerr << "error while redirecting input" << std::endl; }
+        if (vec_in.size() > 2) {
+            std::cerr << "error while redirecting input" << std::endl; 
+            return 0;
+        }
+        else if (vec_in.size() == 2) {
+            input = vec_in.back();
+            boost::algorithm::trim(input);
+        }
 
         // Get the command
         boost::tokenizer<boost::char_separator<char>> tok(vec_in.at(0), sep);
@@ -87,7 +143,7 @@ int Shell::tokenizeInput(std::vector<std::string> &tokens, std::string &input, s
 }
 
 
-int Shell::processInput(std::vector<std::string> &tokens) {
+int Shell::processInput(std::vector<std::string> &tokens, FILE* inputFD, FILE* outputFD) {
 
     if (tokens.empty()) {
         return 0;
@@ -134,7 +190,22 @@ int Shell::processInput(std::vector<std::string> &tokens) {
             if (pid == 0) {
                 // Child
                 chdir(this->cwd.c_str());
-                execv(exec_path.c_str(), cmd);
+
+                char * const * env = 0;
+
+                fclose(stdin);
+                fclose(stdout);
+
+                std::string a = "hello";
+                fwrite(a.c_str(),sizeof(char), a.size(), outputFD);
+
+                int er = errno;
+
+                std::cout << std::strerror(er) << std::endl;
+
+                dup2(fileno(inputFD), STDIN_FILENO);
+                dup2(fileno(outputFD), STDOUT_FILENO);
+                execve(exec_path.c_str(), cmd, env);
             }
             else {
                 // Parent
