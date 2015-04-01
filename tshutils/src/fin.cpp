@@ -1,16 +1,50 @@
-/**
-fin <nbLignes> <fichier>
-La commande fin sert à afficher un certain nombre de lignes d'un fichier à partir de la fin du fichier.
-Le paramètre nbLignes est le nombre de lignes à afficher, ce doit être un entier positif. Le paramètre
-fichier est un chemin relatif ou absolu vers le fichier à lire. Une erreur est affichée si le fichier est
-inexistant.
-tsh> fin 5 inf3172/tp1/source.c
-Fichier introuvable
-tsh> fin 3 inf3172/tp1/sourceTP1.c
- // fin normale du programme
- exit(1);
+#include <iostream>
+#include <fstream>
+#include "../../libpathm/include/file_util.hpp"
+#include <string.h>
+#include <sstream>
+
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        std::cout << "Nombre d'arguments invalides." << std::endl;
+        return 0;
+    }
+    std::ifstream fileToRead(argv[2], std::ifstream::binary);
+
+    int tempErrno = errno;
+    if (tempErrno) {
+        std::cout << strerror(tempErrno);
+        return 0;
+    }
+    long file_lc = line_count(fileToRead);
+    if (file_lc == -1) {
+        std::cout << "Erreur lors de la lecture du fichier." << std::endl;
+        return 0;
+    }
+
+    long qty = atol(argv[1]);
+    std::stringstream numberStream;
+    numberStream << qty;
+    if (numberStream.str() != argv[1]) {
+        std::cerr << "\"" << argv[1] << "\" n'est pas un chiffre" << std::endl;
+        return 0;
+    }
+
+    long startToRead = file_lc - qty;
+    startToRead = startToRead > 0 ? startToRead : 0;
+
+    char buff;
+    while (fileToRead.get(buff)) {
+        if (buff == '\n' && startToRead > 1) {
+            startToRead--;
+            continue;
+        }
+
+        if (startToRead <= 1)
+            std::cout << buff;
+    }
+
+    fileToRead.close();
+
+    return 0;
 }
-tsh> fin test fichier.txt
-Argument invalide
-tsh>
- */

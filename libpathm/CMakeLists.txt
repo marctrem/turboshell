@@ -8,6 +8,6 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 set(SOURCE_FILES src/path.cpp)
 #add_executable(libpathm ${SOURCE_FILES})
-add_library(pathm ${SOURCE_FILES})
+add_library(pathm ${SOURCE_FILES} include/file_util.hpp src/file_util.cpp)
 
 target_link_libraries(pathm ${Boost_LIBRARIES})

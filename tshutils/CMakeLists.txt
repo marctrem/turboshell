@@ -25,3 +25,6 @@ set(SOURCE_FILES_rmall src/rmall.cpp ../libpathm/src/path.cpp)
 add_executable(rmall ${SOURCE_FILES_rmall})
 target_link_libraries(rmall ${Boost_LIBRARIES})
 
+set(SOURCE_FILES_fin src/fin.cpp ../libpathm/src/path.cpp ../libpathm/src/file_util.cpp)
+add_executable(fin ${SOURCE_FILES_fin})
+target_link_libraries(fin ${Boost_LIBRARIES})

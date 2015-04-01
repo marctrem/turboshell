@@ -10,7 +10,7 @@ OBJF=out/obj
 .PHONY: createfolders
 .PHONY: all
 
-all: | createfolders list new newdir rmall size 
+all: | createfolders list new newdir rmall size fin
 	
 
 createfolders: 
@@ -32,6 +32,8 @@ rmall: rmall.o
 size: size.o
 	$(CC) $(OBJF)/$? -o out/$@ $(LDFLAGS)
 
+fin: fin.o
+	$(CC) $(OBJF)/$? -o out/$@ $(LDFLAGS)
 
 list.o: src/list.cpp
 	$(CC) $(CFLAGS) $? -o $(OBJF)/$@
@@ -47,6 +49,10 @@ rmall.o: src/rmall.cpp
 
 size.o: src/size.cpp
 	$(CC) $(CFLAGS) $? -o $(OBJF)/$@
+
+fin.o: src/fin.cpp
+	$(CC) $(CFLAGS) $? -o $(OBJF)/$@
+
 
 clean :
 	rm -f *.o

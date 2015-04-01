@@ -27,3 +27,4 @@ install:
 	install -m 0755 tshutils/out/newdir $(INSTALL_DIR)
 	install -m 0755 tshutils/out/rmall $(INSTALL_DIR)
 	install -m 0755 tshutils/out/size $(INSTALL_DIR)
+	install -m 0755 tshutils/out/fin $(INSTALL_DIR)
