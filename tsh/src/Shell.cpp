@@ -3,22 +3,23 @@
 #include <unistd.h>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/stream.hpp>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <exception>
 
 #include <typeinfo>
 
-using namespace pathm;
+
+
+namespace io = boost::iostreams;
 
 const std::string PROMPT_MSG = "tsh> ";
 
 Shell::Shell(std::istream *in, std::ostream *out, FILE *err) {
-    this->in = in;
-    this->out = out;
-    this->err = err;
 
-    this->cwd = path::get_current_path();
+    this->cwd = pathm::path::get_current_path();
 
     this->findExecutablesInPath();
 
@@ -37,8 +38,6 @@ int Shell::run() {
         std::string input;
         std::string output;
 
-        auto inputFD = stdin;
-        auto outputFD = stdout;
 
         this->displayPrompt();
         lastStatus |= this->tokenizeInput(linetokens, input, output);
@@ -47,41 +46,56 @@ int Shell::run() {
 
         // Prepare files
 
+
+        int previousIN = dup(STDIN_FILENO);
+        bool inModified = !input.empty(); // Better be explicit
+
+        int previousOUT = dup(STDOUT_FILENO);
+        bool outModified = !output.empty();
+
+
         try {
 
-            if (!input.empty()) {
-                inputFD = fopen(input.c_str(), "r");
+            // Todo: Verify if input redirection is working
+            if (inModified) {
+                close(0);
+                fopen(input.c_str(), "r");
                 savedErrno = errno;
 
                 if (savedErrno) {
-                    std::cout << "Input redirection: " << std::strerror(savedErrno) << std::endl;
+                    std::cerr << "Input redirection: " << std::strerror(savedErrno) << std::endl;
                     throw std::exception();
                 }
             }
 
-            if (!output.empty()) {
-                outputFD = fopen(output.c_str(), "w");
+
+            if (outModified) {
+                close(1);
+                FILE *outptr = fopen(output.c_str(), "w");
                 savedErrno = errno;
 
+                std::cerr << "Out descriptor: " << fileno(outptr) << std::endl;
+
                 if (savedErrno) {
-                    std::cout << "Output redirection " << std::strerror(savedErrno) << std::endl;
+                    std::cerr << "Output redirection " << std::strerror(savedErrno) << std::endl;
                     throw std::exception();
                 }
             }
 
-            lastStatus |= this->processInput(linetokens, inputFD, outputFD);
+            // Process the command
+            lastStatus |= this->processInput(linetokens);
 
         } catch (std::exception e) {}
 
-        // cleanup
-        if (inputFD != stdin) {
-            fclose(inputFD);
+        if (inModified) {
+            dup2(previousIN, STDIN_FILENO);
+            close(previousIN);
         }
 
-        if (outputFD != stdout) {
-            fclose(outputFD);
+        if (outModified) {
+            dup2(previousOUT, STDOUT_FILENO);
+            close(previousOUT);
         }
-
     }
     while(!lastStatus);
 
@@ -98,7 +112,7 @@ int Shell::tokenizeInput(std::vector<std::string> &tokens, std::string &input, s
      */
     std::string line;
 
-    if(std::getline(*this->in, line)) {
+    if(std::getline(std::cin, line)) {
         // TODO: Implement better tokenizer function.
         const boost::char_separator<char> sep(" ");
         const boost::char_separator<char> sep_in("<");
@@ -143,7 +157,7 @@ int Shell::tokenizeInput(std::vector<std::string> &tokens, std::string &input, s
 }
 
 
-int Shell::processInput(std::vector<std::string> &tokens, FILE* inputFD, FILE* outputFD) {
+int Shell::processInput(std::vector<std::string> &tokens) {
 
     if (tokens.empty()) {
         return 0;
@@ -151,19 +165,19 @@ int Shell::processInput(std::vector<std::string> &tokens, FILE* inputFD, FILE* o
     else if ("cdir" == tokens.front()) {
 
         if (tokens.size() != 1) {
-            *this->out << ARGUMENT_ERROR << std::endl;
+            std::cerr << ARGUMENT_ERROR << std::endl;
             return 0;
         }
-        *this->out << "Répertoire courrant : " << this->cwd;
+        printf("Répertoire courrant : %s\n", this->cwd.c_str());
     }
     else if ("cd" == tokens.front()) {
         
         if (tokens.size() != 2) {
-            *this->out << ARGUMENT_ERROR << std::endl;
+            std::cerr << ARGUMENT_ERROR << std::endl;
             return 0;
         }
 
-        path p(tokens[1]);
+        pathm::path p(tokens[1]);
 
         this->changeWorkingDirectory(p);
     }
@@ -173,7 +187,7 @@ int Shell::processInput(std::vector<std::string> &tokens, FILE* inputFD, FILE* o
     else {
         // Try to find command
         try {
-            path &exec_path = executablesInPath.at(tokens[0]);
+            pathm::path &exec_path = executablesInPath.at(tokens[0]);
 
             char *cmd[tokens.size() + 1];
 
@@ -193,18 +207,6 @@ int Shell::processInput(std::vector<std::string> &tokens, FILE* inputFD, FILE* o
 
                 char * const * env = 0;
 
-                fclose(stdin);
-                fclose(stdout);
-
-                std::string a = "hello";
-                fwrite(a.c_str(),sizeof(char), a.size(), outputFD);
-
-                int er = errno;
-
-                std::cout << std::strerror(er) << std::endl;
-
-                dup2(fileno(inputFD), STDIN_FILENO);
-                dup2(fileno(outputFD), STDOUT_FILENO);
                 execve(exec_path.c_str(), cmd, env);
             }
             else {
@@ -217,7 +219,7 @@ int Shell::processInput(std::vector<std::string> &tokens, FILE* inputFD, FILE* o
             return 0;
         }
         catch (std::exception &e) {
-            std::cout << "Programme '" << tokens[0] << "' introuvable." << std::endl;
+            std::cerr << "Programme '" << tokens[0] << "' introuvable." << std::endl;
         }
     }
 
@@ -228,7 +230,7 @@ void Shell::changeWorkingDirectory(pathm::path &dest) {
 
     dest.replace_home_symbol();
 
-    path nextPlausiblePath = dest;
+    pathm::path nextPlausiblePath = dest;
 
     nextPlausiblePath.make_absolute(this->cwd);
 
@@ -236,7 +238,7 @@ void Shell::changeWorkingDirectory(pathm::path &dest) {
         this->cwd = nextPlausiblePath;
     }
     else {
-        *this->out << "Répertoire introuvable: " << nextPlausiblePath << "'" << std::endl;
+        std::cerr << "Répertoire introuvable: " << nextPlausiblePath << "'" << std::endl;
         // Todo: Throw an exception to show that the desired path is not valid... Or maybe do something better like telling if it's a file or if it's just not existing.
     }
 }
@@ -246,13 +248,13 @@ void Shell::changeWorkingDirectory(pathm::path &dest) {
 void Shell::findExecutablesInPath() {
 
     // Todo: Extract path
-    auto bin_path = path(REL_BIN_PATH).make_absolute(this->cwd);
+    auto bin_path = pathm::path(REL_BIN_PATH).make_absolute(this->cwd);
 
     for(auto entry : bin_path.list_directory()) {
-        path full_path = path(entry.d_name).make_absolute(bin_path);
+        pathm::path full_path = pathm::path(entry.d_name).make_absolute(bin_path);
 
         if (full_path.is_a(S_IEXEC) && !full_path.is_a(S_IFDIR)) { // Cache the struct stat.
-            executablesInPath.insert(std::pair<std::string, path>(entry.d_name, full_path));
+            executablesInPath.insert(std::pair<std::string, pathm::path>(entry.d_name, full_path));
         }
     }
 }

@@ -19,9 +19,6 @@ public:
     int run();
 
 private:
-    std::istream *in;
-    std::ostream *out;
-    FILE* err;
 
     std::map<std::string, pathm::path> executablesInPath;
 
@@ -29,7 +26,7 @@ private:
 
     void displayPrompt();
     int tokenizeInput(std::vector<std::string> &tokens, std::string&, std::string&);
-    int processInput(std::vector<std::string> &tokens, FILE*, FILE*);
+    int processInput(std::vector<std::string> &tokens);
     void findExecutablesInPath();
 
     void changeWorkingDirectory(pathm::path &dest);
