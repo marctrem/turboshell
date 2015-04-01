@@ -19,16 +19,13 @@ public:
     int run();
 
 private:
-    std::istream *in;
-    std::ostream *out;
-    FILE* err;
 
     std::map<std::string, pathm::path> executablesInPath;
 
     pathm::path cwd;
 
     void displayPrompt();
-    int tokenizeInput(std::vector<std::string> &tokens);
+    int tokenizeInput(std::vector<std::string> &tokens, std::string&, std::string&);
     int processInput(std::vector<std::string> &tokens);
     void findExecutablesInPath();
 
