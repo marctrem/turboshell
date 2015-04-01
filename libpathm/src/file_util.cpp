@@ -19,7 +19,6 @@ long line_count(std::ifstream &fileToRead){
     return lc;
 }
 
-
 long line_count(pathm::path fileToRead) {
     std::ifstream file_stream(fileToRead);
     long lc = line_count(file_stream);
