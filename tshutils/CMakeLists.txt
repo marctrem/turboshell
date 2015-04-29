@@ -3,6 +3,8 @@ project(tshlist)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 find_package(Boost 1.41.0 COMPONENTS system REQUIRED)
+find_package(Threads REQUIRED)
+
 include_directories(${Boost_INCLUDE_DIRS})
 
 set(SOURCE_FILES_list src/list.cpp ../libpathm/src/path.cpp)
@@ -28,3 +30,11 @@ target_link_libraries(rmall ${Boost_LIBRARIES})
 set(SOURCE_FILES_fin src/fin.cpp ../libpathm/src/path.cpp ../libpathm/src/file_util.cpp)
 add_executable(fin ${SOURCE_FILES_fin})
 target_link_libraries(fin ${Boost_LIBRARIES})
+
+set(SOURCE_FILES_lc src/lc.cpp ../libpathm/src/path.cpp ../libpathm/src/file_util.cpp)
+add_executable(lc ${SOURCE_FILES_lc})
+target_link_libraries(lc ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+set(SOURCE_FILES_edit src/edit.cpp ../libpathm/src/path.cpp ../libpathm/src/file_util.cpp)
+add_executable(edit ${SOURCE_FILES_edit})
+target_link_libraries(edit ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
