@@ -23,6 +23,11 @@ int main(int argc, char *argv[]) {
     }
 
     long qty = atol(argv[1]);
+    if (qty < 0){
+        std::cout << "Le nombre de ligne a afficher doit etre positif." << std::endl;
+        return 0;
+    }
+
     std::stringstream numberStream;
     numberStream << qty;
     if (numberStream.str() != argv[1]) {
@@ -30,7 +35,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    long startToRead = file_lc - qty;
+    long startToRead = file_lc - (qty - 1);
     startToRead = startToRead > 0 ? startToRead : 0;
 
     char buff;
