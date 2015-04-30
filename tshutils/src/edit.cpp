@@ -2,96 +2,86 @@
 #include <string.h>
 #include <fstream>
 #include <thread>
+#include <unistd.h>
+#include <termios.h>
+#include <bits/stream_iterator.h>
 
-/**
-La commande edit sert à sauvegarder, en temps réel ou presque, l'entrée standard dans un fichier
-texte en modifiant le texte à la volée. La saisie du texte se termine lorsque le programme reçoit le
-caractère <escape> ou EOF. Chaque caractère saisie est affiché à l'écran, mais le texte est modifié
-avant d'être sauvegardé sur disque. Les modifications au texte touche la ponctuation. Lorsqu'un
-caractère de ponctuation est saisie ".!?", on s'assure que le caractère suivant est un espace et que
-l'espace est suivi d'une lettre majuscule. La toute première lettre du texte doit être une majuscule. Le
-texte est modifié pour respecter ces exigences.
-Pour la saisie suivante :
-j'aime les fruits. c'est delicieux!rafraichissant!Surtout
-l'ete.j'adore les fruits.
-Le texte sauvegardé dans le fichier sera :
-J'aime les fruits. C'est delicieux! Rafraichissant! Surtout l'ete.
-J'adore les fruits.
-Le caractère backspace doit également être supporté, c'est-à-dire que la saisie "Croustilll<BS>es"
-produira "Croustilles" dans le fichier de sortie.
-Deux threads doivent exister dans ce programme au minimum, un pour la saisie de l'entrée standard,
-l'autre pour l'écriture dans le fichier de sortie. Il est possible d'utiliser plus de deux threads si c'est
-nécessaire.
- */
-
-
-char buff;
-bool end = false, loaded = false;
-
-void getText(){
-    int read;
-    while ((read = getc(stdin)) != EOF){
-        if (end || read == 27)
-            break;
-
-        if (read == 'z') break; //TODO: Retirer cette ligne a la remise.
-
-        while (loaded);
-        buff = (char)read;
-        loaded = true;
-    }
-    end = true;
+char getch(void) {
+    struct termios oldTerm, newTerm;
+    char retChar;
+    tcgetattr(STDIN_FILENO, &oldTerm);
+    newTerm = oldTerm;
+    newTerm.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newTerm);
+    retChar = (char) getchar();
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldTerm);
+    return retChar;
 }
 
-void writeText(std::fstream& file){
+void getText(int &outputFileD) {
+    char c;
+    while (1) {
+        c = getch();
+        write(STDOUT_FILENO, &c, 1);
+        if (c == EOF || c == 27) break;
+        write(outputFileD, &c, 1);
+    }
+}
+
+void writeText(int &inputFileD, std::fstream &file) {
     bool endOfSentence = true, space = true;
-    while (1){
-        if (loaded) {
-            if (buff == '.' || buff == '!' || buff == '?') {
-                endOfSentence = true;
-                space = false;
-            } else if (isspace(buff)) {
-                space = true;
-            } else {
-                if (endOfSentence && !space){
-                    std::cout << ' ';
-                    file << ' ';
-                }
-                buff = endOfSentence ? (char) toupper(buff) : buff;
-                endOfSentence = false;
-                space = false;
+    char buff;
+    while (read(inputFileD, &buff, 1) > 0) {
+        if (buff == '.' || buff == '!' || buff == '?') {
+            endOfSentence = true;
+            space = false;
+        } else if (isspace(buff)) {
+            space = true;
+        } else if (buff == 127){
+            //TODO: Aller chercher l'etat precedent.
+        } else {
+            if (endOfSentence && !space) {
+                file << ' ';
             }
-            if (buff == '\b') std::cerr << '!';
-
-            file << buff;
-            std::cout << buff; //TODO: Retirer cette ligne a la remise.
-            loaded = false;
-        } else if (end) {
-            break;
+            buff = endOfSentence ? (char) toupper(buff) : buff;
+            endOfSentence = false;
+            space = false;
         }
+        file << buff;
     }
 }
 
-int main (int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
 
-    if (argc != 2){
+    if (argc != 2) {
         std::cout << "Nombre d'arguments invalides." << std::endl;
-        return 0;
+        return 1;
     }
 
     std::fstream file;
+    file.rdbuf()->pubsetbuf(0, 0);
     file.open(argv[1], std::ifstream::out);
     int tempErrno = errno;
     if (tempErrno) {
-        std::cout << strerror(tempErrno);
-        return 0;
+        std::cout << strerror(tempErrno) << std::endl;
+        return 2;
+    }
+    int threadPipe[2];
+
+    if (pipe(threadPipe) == -1) {
+        std::cout << "Erreur a la creation du pipe." << std::endl;
+        return 3;
     }
 
-    std::thread load(getText);
-    std::thread save(writeText, std::ref(file));
+    std::thread load(getText, std::ref(threadPipe[1]));
+    std::thread save(writeText, std::ref(threadPipe[0]), std::ref(file));
 
     load.join();
-    file.close();
-    save.join();
+    close(threadPipe[1]);
 
+    save.join();
+    close(threadPipe[0]);
+
+    file.close();
+    return 0;
 }
