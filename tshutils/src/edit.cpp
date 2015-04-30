@@ -2,9 +2,12 @@
 #include <string.h>
 #include <fstream>
 #include <thread>
+#include <list>
 #include <unistd.h>
 #include <termios.h>
 #include <bits/stream_iterator.h>
+#include <bits/stl_list.h>
+#include <bits/stl_bvector.h>
 
 char getch(void) {
     struct termios oldTerm, newTerm;
@@ -22,31 +25,45 @@ void getText(int &outputFileD) {
     char c;
     while (1) {
         c = getch();
-        write(STDOUT_FILENO, &c, 1);
         if (c == EOF || c == 27) break;
         write(outputFileD, &c, 1);
     }
 }
 
 void writeText(int &inputFileD, std::fstream &file) {
-    bool endOfSentence = true, space = true;
-    char buff;
+    std::list<std::pair<bool, bool>> history;
+    history.push_front(std::pair<bool, bool>(true, true));
+    bool oldEndOfSentence, oldSpace, newEndOfSentence, newSpace;
+    char buff, sp = ' ';
     while (read(inputFileD, &buff, 1) > 0) {
+        oldEndOfSentence = history.front().first;
+        oldSpace = history.front().second;
         if (buff == '.' || buff == '!' || buff == '?') {
-            endOfSentence = true;
-            space = false;
+            newEndOfSentence = true;
+            newSpace = false;
         } else if (isspace(buff)) {
-            space = true;
+            newEndOfSentence = oldEndOfSentence;
+            newSpace = true;
         } else if (buff == 127){
-            //TODO: Aller chercher l'etat precedent.
+            write(STDOUT_FILENO, &buff, 1);
+            history.pop_front();
+            long cursor = file.tellp();
+            file.seekp(cursor-1);
+            continue;
         } else {
-            if (endOfSentence && !space) {
+            if (oldEndOfSentence && !oldSpace) {
+                newEndOfSentence = oldEndOfSentence;
+                newSpace = true;
+                history.push_front(std::pair<bool, bool>(newEndOfSentence, newSpace));
+                write(STDOUT_FILENO, &sp, 1);
                 file << ' ';
             }
-            buff = endOfSentence ? (char) toupper(buff) : buff;
-            endOfSentence = false;
-            space = false;
+            buff = oldEndOfSentence ? (char) toupper(buff) : buff;
+            newEndOfSentence = false;
+            newSpace = false;
         }
+        history.push_front(std::pair<bool, bool>(newEndOfSentence, newSpace));
+        write(STDOUT_FILENO, &buff, 1);
         file << buff;
     }
 }
@@ -83,5 +100,6 @@ int main(int argc, char *argv[]) {
     close(threadPipe[0]);
 
     file.close();
+    std::cout << std::endl;
     return 0;
 }
