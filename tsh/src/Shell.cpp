@@ -41,8 +41,6 @@ int Shell::run() {
 
         this->displayPrompt();
         lastStatus |= this->tokenizeInput(linetokens, input, output);
-        std::cout << "Input: " << input << std::endl;
-        std::cout << "Output " << output << std::endl;
 
         // Prepare files
 
@@ -73,8 +71,6 @@ int Shell::run() {
                 close(1);
                 FILE *outptr = fopen(output.c_str(), "w");
                 savedErrno = errno;
-
-                std::cerr << "Out descriptor: " << fileno(outptr) << std::endl;
 
                 if (savedErrno) {
                     std::cerr << "Output redirection " << std::strerror(savedErrno) << std::endl;

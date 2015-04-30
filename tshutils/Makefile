@@ -1,6 +1,7 @@
 CC=g++
 CFLAGS=-c -Wall -Wextra -std=c++11
 LDFLAGS=-std=c++11 -L../libpathm/out -lpathm -lboost_system
+THREAD=-pthread
 SOURCES=src/Shell.cpp src/main.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=tsh
@@ -10,10 +11,10 @@ OBJF=out/obj
 .PHONY: createfolders
 .PHONY: all
 
-all: | createfolders list new newdir rmall size fin
-	
+all: | createfolders list new newdir rmall size fin lc edit
 
-createfolders: 
+
+createfolders:
 	-mkdir -p out/obj/
 
 
@@ -35,6 +36,13 @@ size: size.o
 fin: fin.o
 	$(CC) $(OBJF)/$? -o out/$@ $(LDFLAGS)
 
+lc: lc.o
+	$(CC) $(OBJF)/$? -o out/$@ $(LDFLAGS) $(THREAD)
+
+edit: edit.o
+	$(CC) $(OBJF)/$? -o out/$@ $(LDFLAGS) $(THREAD)
+
+
 list.o: src/list.cpp
 	$(CC) $(CFLAGS) $? -o $(OBJF)/$@
 
@@ -51,6 +59,12 @@ size.o: src/size.cpp
 	$(CC) $(CFLAGS) $? -o $(OBJF)/$@
 
 fin.o: src/fin.cpp
+	$(CC) $(CFLAGS) $? -o $(OBJF)/$@
+
+lc.o: src/lc.cpp
+	$(CC) $(CFLAGS) $? -o $(OBJF)/$@
+
+edit.o: src/edit.cpp
 	$(CC) $(CFLAGS) $? -o $(OBJF)/$@
 
 
